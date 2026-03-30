@@ -72,9 +72,9 @@ import net.minecraft.world.WorldView;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.ladysnake.creeperspores.mixin.EntityAccessor;
-import org.quiltmc.qsl.networking.api.PlayerLookup;
 
 import javax.annotation.Nullable;
+import java.util.ArrayList;
 import java.util.Objects;
 import java.util.UUID;
 
@@ -181,8 +181,20 @@ public class CreeperlingEntity extends PathAwareEntity implements EnergySwirlOwn
         return false;
     }
 
+    ArrayList<ServerPlayerEntity> trackingPlayers =  new ArrayList<>();
+
+    @Override
+    public void onStartedTrackingBy(ServerPlayerEntity player) {
+        trackingPlayers.add(player);
+    }
+
+    @Override
+    public void onStoppedTrackingBy(ServerPlayerEntity player) {
+        trackingPlayers.remove(player);
+    }
+
     public void applyFertilizer(ItemStack boneMeal) {
-        if (!this.getWorld().isClient && this.ticksInSunlight < MATURATION_TIME) {
+        if (!this.getWorld().isClient() && this.ticksInSunlight < MATURATION_TIME) {
             if (boneMeal.isIn(CreeperSpores.SUPER_FERTILIZERS)) {
                 this.ticksInSunlight = MATURATION_TIME;
             } else {
@@ -194,7 +206,7 @@ public class CreeperlingEntity extends PathAwareEntity implements EnergySwirlOwn
             buf.writeInt(this.getId());
             CustomPayloadS2CPacket packet = new CustomPayloadS2CPacket(CreeperSpores.CREEPERLING_FERTILIZATION_PACKET, buf);
 
-            for (ServerPlayerEntity p : PlayerLookup.tracking(this)) {
+            for (ServerPlayerEntity p : trackingPlayers) {
                 p.networkHandler.sendPacket(packet);
             }
         }

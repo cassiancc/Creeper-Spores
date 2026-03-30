@@ -1,0 +1,38 @@
+{
+  "schemaVersion": 1,
+  "id": "modid",
+  "version": "${version}",
+  "name": "Creeper Spores",
+  "description": "Griefless creepers with a few tricks - a port of Creeper Spores to Fabric",
+  "authors": [
+    "Pyrofab",
+    "doctor4t",
+    "cassiancc"
+  ],
+  "contact": {
+    "sources": "https://github.com/cassiancc/Creeper-Spores",
+    "issues": "https://github.com/cassiancc/Creeper-Spores/issues",
+    "discord": "discord.cassian.cc",
+    "homepage": "https://github.com/cassiancc/Creeper-Spores"
+  },
+  "license": "LGPL-3",
+  "icon": "assets/creeperspores/textures/logo.png",
+  "environment": "*",
+  "entrypoints": {
+    "main": [
+      "org.ladysnake.creeperspores.CreeperSpores"
+    ],
+    "client": [
+      "org.ladysnake.creeperspores.client.CreeperSporesClient"
+    ]
+  },
+  "mixins": [
+    "mixins.creeperspores.common.json"
+  ],
+  "depends": {
+    "fabricloader": ">=0.14.21",
+    "minecraft": "~1.20.1",
+    "java": ">=17",
+    "fabric-api": "*"
+  }
+}

@@ -1,27 +1,14 @@
 plugins {
-    id 'io.github.ladysnake.chenille' version '0.11.3'
+    id 'fabric-loom' version "1.15-SNAPSHOT"
+    id 'maven-publish'
 }
 
-sourceCompatibility = targetCompatibility = JavaVersion.VERSION_17
+base {
+    archivesName = project.name
+}
 
-archivesBaseName = project.name
 version = project.mod_version
 group = project.maven_group
-
-chenille {
-    configurePublishing {
-        withLadysnakeMaven()
-        withCurseforgeRelease()
-        withGithubRelease()
-        withModrinthRelease()
-    }
-    configureTestmod {
-        withDependencyConfiguration()
-    }
-
-    javaVersion = 17
-    license = 'LGPL'
-}
 
 processResources {
     inputs.property "version", project.version
@@ -51,15 +38,19 @@ repositories {
             includeGroup 'com.terraformersmc'
         }
     }
+
+    maven {
+        name = 'Quilt'
+        url = 'https://maven.quiltmc.org/repository/release'
+    }
 }
 
 dependencies {
     minecraft "com.mojang:minecraft:${minecraft_version}"
     mappings "org.quiltmc:quilt-mappings:${minecraft_version}+build.${quilt_mappings}:intermediary-v2"
-    modImplementation "org.quiltmc:quilt-loader:${project.quilt_loader_version}"
+    modImplementation "net.fabricmc:fabric-loader:${project.loader_version}"
 
-    modImplementation "org.quiltmc:qsl:${qsl_version}+${minecraft_version}"
-    modImplementation "org.quiltmc.quilted-fabric-api:quilted-fabric-api:${quilted_fabric_api_version}-${minecraft_version}"
+    modImplementation "net.fabricmc.fabric-api:fabric-api:${project.fabric_version}"
 
     modRuntimeOnly ("com.terraformersmc:modmenu:${modmenu_version}") {
         exclude group: 'net.fabricmc.fabric-api'
@@ -71,8 +62,6 @@ dependencies {
 
     compileOnly "com.google.code.findbugs:jsr305:3.0.2"
     compileOnly "org.jetbrains:annotations:19.0.0"
-
-    testmodImplementation sourceSets.main.output
 }
 
 

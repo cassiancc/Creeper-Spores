@@ -17,17 +17,16 @@
  */
 package org.ladysnake.creeperspores.client;
 
+import net.fabricmc.api.ClientModInitializer;
+import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 import net.fabricmc.fabric.api.client.rendering.v1.EntityRendererRegistry;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
-import org.quiltmc.loader.api.ModContainer;
-import org.quiltmc.qsl.base.api.entrypoint.client.ClientModInitializer;
-import org.quiltmc.qsl.networking.api.client.ClientPlayNetworking;
 
 public class CreeperSporesClient implements ClientModInitializer {
     @Override
-    public void onInitializeClient(ModContainer mod) {
+    public void onInitializeClient() {
         EntityRendererRegistry.register(
                 CreeperEntry.getVanilla().creeperlingType(),
                 (context) -> new CreeperlingEntityRenderer(context, CreeperlingEntityRenderer.DEFAULT_SKIN)
