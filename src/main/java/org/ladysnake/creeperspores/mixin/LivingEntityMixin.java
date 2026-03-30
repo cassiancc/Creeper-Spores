@@ -17,14 +17,6 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.damage.DamageSource;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.world.World;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.spongepowered.asm.mixin.Mixin;
@@ -35,28 +27,36 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 import javax.annotation.Nullable;
+import net.minecraft.world.damagesource.DamageSource;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.Level;
 
 @Mixin(LivingEntity.class)
 public abstract class LivingEntityMixin extends Entity {
     @Shadow
     public abstract float getHealth();
 
-    @Shadow @Nullable public abstract StatusEffectInstance getStatusEffect(StatusEffect effect);
+    @Shadow @Nullable public abstract MobEffectInstance getEffect(MobEffect effect);
 
-    public LivingEntityMixin(EntityType<?> type, World world) {
+    public LivingEntityMixin(EntityType<?> type, Level world) {
         super(type, world);
     }
 
-    @Inject(method = "damage", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/LivingEntity;isDead()Z", ordinal = 1))
+    @Inject(method = "hurt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isDeadOrDying()Z", ordinal = 1))
     private void spawnCreeperling(DamageSource cause, float amount, CallbackInfoReturnable<Boolean> cir) {
         for (CreeperEntry creeperEntry : CreeperEntry.all()) {
-            StatusEffectInstance spores = this.getStatusEffect(creeperEntry.sporeEffect());
+            MobEffectInstance spores = this.getEffect(creeperEntry.sporeEffect());
             if (spores != null) {
                 float chance = 0.2f * (spores.getAmplifier() + 1);
                 if (this.getHealth() <= 0.0f) {
                     chance *= 4;
                 }
-                if (cause.isTypeIn(CreeperSpores.SPAWNS_MORE_CREEPERLINGS)) {
+                if (cause.is(CreeperSpores.SPAWNS_MORE_CREEPERLINGS)) {
                     chance *= 2;
                 }
                 if (random.nextFloat() < chance) {
@@ -66,10 +66,10 @@ public abstract class LivingEntityMixin extends Entity {
         }
     }
 
-    @ModifyVariable(method = "damage", at = @At("HEAD"), ordinal = 0, argsOnly = true)
+    @ModifyVariable(method = "hurt", at = @At("HEAD"), ordinal = 0, argsOnly = true)
     private float dealDoubleFireDamage(float damageAmount, DamageSource damage) {
         //noinspection ConstantConditions
-        if ((Entity) this instanceof CreeperEntity && damage.isTypeIn(CreeperSpores.EXTRA_CREEPER_DAMAGE)) {
+        if ((Entity) this instanceof Creeper && damage.is(CreeperSpores.EXTRA_CREEPER_DAMAGE)) {
             return damageAmount * 2;
         }
         return damageAmount;

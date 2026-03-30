@@ -17,10 +17,6 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.explosion.Explosion;
 import org.ladysnake.creeperspores.common.SporeSpreader;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,6 +25,10 @@ import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import javax.annotation.Nullable;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.phys.Vec3;
 
 @Mixin(Explosion.class)
 public abstract class ExplosionMixin {
@@ -39,14 +39,14 @@ public abstract class ExplosionMixin {
 
     @Shadow @Final private double z;
 
-    @Shadow @Nullable public abstract LivingEntity getCausingEntity();
+    @Shadow @Nullable public abstract LivingEntity getIndirectSourceEntity();
 
 
     // Using ModifyVariable is way easier than an Inject capturing every local
-    @ModifyVariable(method = "collectBlocksAndDamageEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/Entity;damage(Lnet/minecraft/entity/damage/DamageSource;F)Z", shift = At.Shift.AFTER), ordinal = 0)
+    @ModifyVariable(method = "explode", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z", shift = At.Shift.AFTER), ordinal = 0)
     private Entity spreadSpores(Entity affectedEntity) {
-        if (this.getCausingEntity() instanceof SporeSpreader) {
-            ((SporeSpreader) this.getCausingEntity()).spreadSpores((Explosion) (Object) this, new Vec3d(this.x, this.y, this.z), affectedEntity);
+        if (this.getIndirectSourceEntity() instanceof SporeSpreader) {
+            ((SporeSpreader) this.getIndirectSourceEntity()).spreadSpores((Explosion) (Object) this, new Vec3(this.x, this.y, this.z), affectedEntity);
         }
         return affectedEntity;
     }

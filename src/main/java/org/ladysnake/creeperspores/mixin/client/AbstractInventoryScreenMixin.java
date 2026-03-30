@@ -18,10 +18,10 @@
 package org.ladysnake.creeperspores.mixin.client;
 
 import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screen.ingame.AbstractInventoryScreen;
-import net.minecraft.entity.effect.StatusEffect;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.text.MutableText;
+import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
+import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.effect.MobEffectInstance;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
@@ -32,30 +32,30 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 import java.util.List;
 
-@Mixin(AbstractInventoryScreen.class)
+@Mixin(EffectRenderingInventoryScreen.class)
 public abstract class AbstractInventoryScreenMixin {
     @Unique
-    private List<StatusEffectInstance> renderedEffects;
+    private List<MobEffectInstance> renderedEffects;
     @Unique
     private int renderedEffectsIndex;
 
-    @Inject(method = "drawStatusEffectDescriptions", at = @At("HEAD"))
-    private void creeperspores$retrieveRenderedEffects(GuiGraphics graphics, int x, int height, Iterable<StatusEffectInstance> effects, CallbackInfo ci) {
-        renderedEffects = (List<StatusEffectInstance>) effects;
+    @Inject(method = "renderLabels(Lnet/minecraft/client/gui/GuiGraphics;IILjava/lang/Iterable;)V", at = @At("HEAD"))
+    private void creeperspores$retrieveRenderedEffects(GuiGraphics graphics, int x, int height, Iterable<MobEffectInstance> effects, CallbackInfo ci) {
+        renderedEffects = (List<MobEffectInstance>) effects;
         renderedEffectsIndex = 0;
     }
 
-    @Inject(method = "drawStatusEffectDescriptions", at = @At("RETURN"))
-    private void creeperspores$clearRenderedEffects(GuiGraphics graphics, int x, int height, Iterable<StatusEffectInstance> effects, CallbackInfo ci) {
+    @Inject(method = "renderLabels(Lnet/minecraft/client/gui/GuiGraphics;IILjava/lang/Iterable;)V", at = @At("RETURN"))
+    private void creeperspores$clearRenderedEffects(GuiGraphics graphics, int x, int height, Iterable<MobEffectInstance> effects, CallbackInfo ci) {
         renderedEffects = null;
     }
 
-    @ModifyVariable(method = "getStatusEffectName", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/text/Text;copy()Lnet/minecraft/text/MutableText;"), index = 2)
-    private MutableText creeperspores$updateRenderedEffectName(MutableText drawnString) {
+    @ModifyVariable(method = "getEffectName", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/network/chat/Component;copy()Lnet/minecraft/network/chat/MutableComponent;"), index = 2)
+    private MutableComponent creeperspores$updateRenderedEffectName(MutableComponent drawnString) {
         if (renderedEffects != null) {
-            StatusEffect renderedEffect = renderedEffects.get(renderedEffectsIndex++).getEffectType();
+            MobEffect renderedEffect = renderedEffects.get(renderedEffectsIndex++).getEffect();
             if (renderedEffect instanceof CreeperSporeEffect sporeEffect) {
-                return sporeEffect.getLocalizedName().copyContentOnly();
+                return sporeEffect.getLocalizedName().plainCopy();
             }
         }
         return drawnString;

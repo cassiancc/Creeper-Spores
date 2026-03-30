@@ -17,10 +17,6 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.mob.MobEntity;
-import net.minecraft.world.LightType;
-import net.minecraft.world.SpawnHelper;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.spongepowered.asm.mixin.Mixin;
@@ -29,13 +25,18 @@ import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
 import static org.spongepowered.asm.mixin.injection.At.Shift.AFTER;
 
-@Mixin(SpawnHelper.class)
+import net.minecraft.world.entity.Mob;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.LightLayer;
+import net.minecraft.world.level.NaturalSpawner;
+
+@Mixin(NaturalSpawner.class)
 public abstract class SpawnHelperMixin {
-    @ModifyVariable(method = "spawnEntitiesInChunk(Lnet/minecraft/entity/SpawnGroup;Lnet/minecraft/server/world/ServerWorld;Lnet/minecraft/world/chunk/Chunk;Lnet/minecraft/util/math/BlockPos;Lnet/minecraft/world/SpawnHelper$Checker;Lnet/minecraft/world/SpawnHelper$Runner;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/mob/MobEntity;refreshPositionAndAngles(DDDFF)V", shift = AFTER))
-    private static MobEntity substituteCreeper(MobEntity spawnedEntity) {
-        if (spawnedEntity instanceof CreeperEntity
-                && spawnedEntity.getWorld().getLightLevel(LightType.SKY, spawnedEntity.getBlockPos()) > 0
-                && spawnedEntity.getWorld().getGameRules().get(CreeperSpores.CREEPER_REPLACE_CHANCE).get() > spawnedEntity.getRandom().nextDouble()) {
+    @ModifyVariable(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;moveTo(DDDFF)V", shift = AFTER))
+    private static Mob substituteCreeper(Mob spawnedEntity) {
+        if (spawnedEntity instanceof Creeper
+                && spawnedEntity.level().getBrightness(LightLayer.SKY, spawnedEntity.blockPosition()) > 0
+                && spawnedEntity.level().getGameRules().getRule(CreeperSpores.CREEPER_REPLACE_CHANCE).get() > spawnedEntity.getRandom().nextDouble()) {
             CreeperEntry creeperEntry = CreeperEntry.get(spawnedEntity.getType());
             if (creeperEntry != null) {
                 return creeperEntry.createCreeperling(spawnedEntity);

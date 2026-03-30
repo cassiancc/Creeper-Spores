@@ -18,19 +18,19 @@
 package org.ladysnake.creeperspores.mixin;
 
 import net.fabricmc.fabric.api.util.TriState;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
-import net.minecraft.entity.effect.StatusEffectInstance;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.entity.mob.HostileEntity;
-import net.minecraft.entity.player.PlayerEntity;
-import net.minecraft.item.ItemStack;
-import net.minecraft.nbt.NbtCompound;
-import net.minecraft.util.Hand;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.World;
-import net.minecraft.world.explosion.Explosion;
+import net.minecraft.nbt.CompoundTag;
+import net.minecraft.world.InteractionHand;
+import net.minecraft.world.effect.MobEffectInstance;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.entity.monster.Monster;
+import net.minecraft.world.entity.player.Player;
+import net.minecraft.world.item.ItemStack;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.Level;
+import net.minecraft.world.phys.Vec3;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
@@ -42,53 +42,53 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-@Mixin(CreeperEntity.class)
-public abstract class CreeperEntityMixin extends HostileEntity implements SporeSpreader {
+@Mixin(Creeper.class)
+public abstract class CreeperEntityMixin extends Monster implements SporeSpreader {
 
     @Unique private TriState giveSpores = TriState.DEFAULT;
 
-    protected CreeperEntityMixin(EntityType<? extends HostileEntity> type, World world) {
+    protected CreeperEntityMixin(EntityType<? extends Monster> type, Level world) {
         super(type, world);
     }
 
     @Unique
     private boolean shouldSpreadSpores() {
-        return this.giveSpores == TriState.TRUE || (this.giveSpores == TriState.DEFAULT && !this.isAiDisabled());
+        return this.giveSpores == TriState.TRUE || (this.giveSpores == TriState.DEFAULT && !this.isNoAi());
     }
 
     @Override
-    public void spreadSpores(Explosion explosion, Vec3d center, Entity affectedEntity) {
+    public void spreadSpores(Explosion explosion, Vec3 center, Entity affectedEntity) {
         if (affectedEntity instanceof LivingEntity victim && this.shouldSpreadSpores()) {
-            double exposure = Explosion.getExposure(center, victim);
+            double exposure = Explosion.getSeenPercent(center, victim);
             CreeperEntry creeperEntry = CreeperEntry.get(this.getType());
             if (creeperEntry != null) {
-                victim.addStatusEffect(new StatusEffectInstance(creeperEntry.sporeEffect(), (int) Math.round(CreeperSpores.MAX_SPORE_TIME * exposure)));
+                victim.addEffect(new MobEffectInstance(creeperEntry.sporeEffect(), (int) Math.round(CreeperSpores.MAX_SPORE_TIME * exposure)));
             }
         }
     }
 
     @Inject(
-            method = "interactMob",
-            at = @At(value = "INVOKE", target = "Lnet/minecraft/entity/mob/HostileEntity;interactMob(Lnet/minecraft/entity/player/PlayerEntity;Lnet/minecraft/util/Hand;)Lnet/minecraft/util/ActionResult;"),
+            method = "mobInteract",
+            at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Monster;mobInteract(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"),
             cancellable = true
     )
-    private void interactSpawnEgg(PlayerEntity player, Hand hand, CallbackInfoReturnable<Boolean> cir) {
-        ItemStack stack = player.getStackInHand(hand);
+    private void interactSpawnEgg(Player player, InteractionHand hand, CallbackInfoReturnable<Boolean> cir) {
+        ItemStack stack = player.getItemInHand(hand);
         CreeperEntry creeperEntry = CreeperEntry.get(this.getType());
         if (creeperEntry != null && CreeperlingEntity.interactSpawnEgg(player, this, stack, creeperEntry)) {
             cir.setReturnValue(true);
         }
     }
 
-    @Inject(method = "writeCustomDataToNbt", at = @At("RETURN"))
-    private void writeCustomDataToTag(NbtCompound tag, CallbackInfo ci) {
+    @Inject(method = "addAdditionalSaveData", at = @At("RETURN"))
+    private void writeCustomDataToTag(CompoundTag tag, CallbackInfo ci) {
         if (this.giveSpores != TriState.DEFAULT) {
             tag.putBoolean(CreeperSpores.GIVE_SPORES_TAG, this.giveSpores.get());
         }
     }
 
-    @Inject(method = "readCustomDataFromNbt", at = @At("RETURN"))
-    private void readCustomDataFromTag(NbtCompound tag, CallbackInfo ci) {
+    @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
+    private void readCustomDataFromTag(CompoundTag tag, CallbackInfo ci) {
         if (tag.contains(CreeperSpores.GIVE_SPORES_TAG)) {
             this.giveSpores = TriState.of(tag.getBoolean(CreeperSpores.GIVE_SPORES_TAG));
         }

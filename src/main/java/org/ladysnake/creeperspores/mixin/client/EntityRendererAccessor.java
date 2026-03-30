@@ -17,14 +17,14 @@
  */
 package org.ladysnake.creeperspores.mixin.client;
 
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.gen.Invoker;
 
 @Mixin(EntityRenderer.class)
 public interface EntityRendererAccessor {
     @Invoker
-    Identifier invokeGetTexture(Entity e);
+    ResourceLocation invokeGetTextureLocation(Entity e);
 }

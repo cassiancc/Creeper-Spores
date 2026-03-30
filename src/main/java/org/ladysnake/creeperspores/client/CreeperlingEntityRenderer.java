@@ -17,29 +17,28 @@
  */
 package org.ladysnake.creeperspores.client;
 
-import net.minecraft.client.render.entity.EntityRenderer;
-import net.minecraft.client.render.entity.EntityRendererFactory;
-import net.minecraft.client.render.entity.MobEntityRenderer;
-import net.minecraft.client.render.entity.model.CreeperEntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
-import net.minecraft.client.util.math.MatrixStack;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Identifier;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 import org.ladysnake.creeperspores.mixin.client.EntityRendererAccessor;
-
+import com.mojang.blaze3d.vertex.PoseStack;
 import javax.annotation.Nullable;
+import net.minecraft.client.model.CreeperModel;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.entity.EntityRenderer;
+import net.minecraft.client.renderer.entity.EntityRendererProvider;
+import net.minecraft.client.renderer.entity.MobRenderer;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 
-public class CreeperlingEntityRenderer extends MobEntityRenderer<CreeperlingEntity, CreeperEntityModel<CreeperlingEntity>> {
-    public static final Identifier DEFAULT_SKIN = new Identifier("textures/entity/creeper/creeper.png");
+public class CreeperlingEntityRenderer extends MobRenderer<CreeperlingEntity, CreeperModel<CreeperlingEntity>> {
+    public static final ResourceLocation DEFAULT_SKIN = new ResourceLocation("textures/entity/creeper/creeper.png");
 
-    private final Identifier texture;
+    private final ResourceLocation texture;
 
-    public static <E extends Entity> EntityRenderer<CreeperlingEntity> createRenderer(EntityRendererFactory.Context context, EntityRendererFactory<E> factory) {
+    public static <E extends Entity> EntityRenderer<CreeperlingEntity> createRenderer(EntityRendererProvider.Context context, EntityRendererProvider<E> factory) {
         EntityRenderer<?> baseRenderer = factory.create(context);
-        Identifier texture;
+        ResourceLocation texture;
         try {
-            texture = ((EntityRendererAccessor) baseRenderer).invokeGetTexture(null);
+            texture = ((EntityRendererAccessor) baseRenderer).invokeGetTextureLocation(null);
         } catch (NullPointerException ignored) {
             // This creeper renderer does not like nulls, fall back to default texture
             texture = DEFAULT_SKIN;
@@ -47,20 +46,20 @@ public class CreeperlingEntityRenderer extends MobEntityRenderer<CreeperlingEnti
         return new CreeperlingEntityRenderer(context, texture);
     }
 
-    public CreeperlingEntityRenderer(EntityRendererFactory.Context context, Identifier texture) {
-        super(context, new CreeperEntityModel<>(context.getPart(EntityModelLayers.CREEPER)), 0.25F);
-        this.addFeature(new CreeperlingChargeFeatureRenderer(this, context.getModelLoader()));
+    public CreeperlingEntityRenderer(EntityRendererProvider.Context context, ResourceLocation texture) {
+        super(context, new CreeperModel<>(context.bakeLayer(ModelLayers.CREEPER)), 0.25F);
+        this.addLayer(new CreeperlingChargeFeatureRenderer(this, context.getModelSet()));
         this.texture = texture;
     }
 
     @Override
-    protected void scale(CreeperlingEntity entity, MatrixStack matrix, float tickDelta) {
+    protected void scale(CreeperlingEntity entity, PoseStack matrix, float tickDelta) {
         matrix.scale(0.5f, 0.5f, 0.5f);
     }
 
     @Nullable
     @Override
-    public Identifier getTexture(CreeperlingEntity creeperling) {
+    public ResourceLocation getTextureLocation(CreeperlingEntity creeperling) {
         return texture;
     }
 }

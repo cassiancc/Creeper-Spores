@@ -17,10 +17,10 @@
  */
 package org.ladysnake.creeperspores.common;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.util.math.Vec3d;
-import net.minecraft.world.explosion.Explosion;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.phys.Vec3;
 
 public interface SporeSpreader {
-    void spreadSpores(Explosion explosion, Vec3d center, Entity affectedEntity);
+    void spreadSpores(Explosion explosion, Vec3 center, Entity affectedEntity);
 }

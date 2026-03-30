@@ -17,13 +17,13 @@
  */
 package org.ladysnake.creeperspores;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityType;
-import net.minecraft.entity.LivingEntity;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 
 import javax.annotation.Nullable;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.EntityType;
+import net.minecraft.world.entity.LivingEntity;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -55,10 +55,10 @@ public record CreeperEntry(EntityType<? extends LivingEntity> creeperType,
      * Spawns a creeperling at an affected entity
      */
     public CreeperlingEntity spawnCreeperling(Entity affected) {
-        if (!affected.getWorld().isClient) {
-            CreeperlingEntity spawn = Objects.requireNonNull(this.creeperlingType.create(affected.getWorld()));
-            spawn.refreshPositionAndAngles(affected.getX(), affected.getY(), affected.getZ(), 0, 0);
-            affected.getWorld().spawnEntity(spawn);
+        if (!affected.level().isClientSide) {
+            CreeperlingEntity spawn = Objects.requireNonNull(this.creeperlingType.create(affected.level()));
+            spawn.moveTo(affected.getX(), affected.getY(), affected.getZ(), 0, 0);
+            affected.level().addFreshEntity(spawn);
             return spawn;
         }
         return null;
@@ -68,8 +68,8 @@ public record CreeperEntry(EntityType<? extends LivingEntity> creeperType,
      * Create a creeperling for an entity, without spawning it
      */
     public CreeperlingEntity createCreeperling(LivingEntity entity) {
-        CreeperlingEntity creeperlingEntity = Objects.requireNonNull(creeperlingType.create(entity.getWorld()));
-        creeperlingEntity.copyPositionAndRotation(entity);
+        CreeperlingEntity creeperlingEntity = Objects.requireNonNull(creeperlingType.create(entity.level()));
+        creeperlingEntity.copyPosition(entity);
         return creeperlingEntity;
     }
 }

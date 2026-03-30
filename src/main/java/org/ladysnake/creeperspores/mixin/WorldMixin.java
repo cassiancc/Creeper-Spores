@@ -17,11 +17,11 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.mob.CreeperEntity;
-import net.minecraft.world.GameRules;
-import net.minecraft.world.World;
-import net.minecraft.world.explosion.Explosion;
+import net.minecraft.world.entity.Entity;
+import net.minecraft.world.entity.monster.Creeper;
+import net.minecraft.world.level.Explosion;
+import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.creeperspores.CreeperGrief;
 import org.ladysnake.creeperspores.CreeperSpores;
@@ -30,16 +30,16 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(World.class)
+@Mixin(Level.class)
 public abstract class WorldMixin {
     @Shadow public abstract GameRules getGameRules();
 
-    @ModifyVariable(method = "createExplosion(Lnet/minecraft/entity/Entity;Lnet/minecraft/entity/damage/DamageSource;Lnet/minecraft/world/explosion/ExplosionBehavior;DDDFZLnet/minecraft/world/World$ExplosionSourceType;Z)Lnet/minecraft/world/explosion/Explosion;", ordinal = 0, at = @At(value = "STORE", ordinal = 0))
-    private Explosion.DestructionType griefLessExplosion(Explosion.DestructionType explosionType, @Nullable Entity entity) {
-        if (entity instanceof CreeperEntity creeper) {
-            CreeperGrief grief = this.getGameRules().get(CreeperSpores.CREEPER_GRIEF).get();
-            if (!grief.shouldGrief(creeper.isEnergySwirlActive())) {
-                return Explosion.DestructionType.KEEP;
+    @ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;Z)Lnet/minecraft/world/level/Explosion;", ordinal = 0, at = @At(value = "STORE", ordinal = 0))
+    private Explosion.BlockInteraction griefLessExplosion(Explosion.BlockInteraction explosionType, @Nullable Entity entity) {
+        if (entity instanceof Creeper creeper) {
+            CreeperGrief grief = this.getGameRules().getRule(CreeperSpores.CREEPER_GRIEF).get();
+            if (!grief.shouldGrief(creeper.isPowered())) {
+                return Explosion.BlockInteraction.KEEP;
             }
         }
         return explosionType;

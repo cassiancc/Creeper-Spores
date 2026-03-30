@@ -17,10 +17,10 @@
  */
 package org.ladysnake.creeperspores.mixin.client;
 
-import net.minecraft.client.gl.ShaderEffect;
-import net.minecraft.client.render.GameRenderer;
-import net.minecraft.entity.Entity;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.renderer.GameRenderer;
+import net.minecraft.client.renderer.PostChain;
+import net.minecraft.resources.ResourceLocation;
+import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 import org.spongepowered.asm.mixin.Mixin;
@@ -31,14 +31,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
 @Mixin(GameRenderer.class)
 public abstract class GameRendererMixin {
-    @Shadow @Nullable ShaderEffect shader;
+    @Shadow @Nullable PostChain postEffect;
 
-    @Shadow abstract void loadShader(Identifier id);
+    @Shadow abstract void loadEffect(ResourceLocation id);
 
-    @Inject(method = "onCameraEntitySet", at = @At("RETURN"))
+    @Inject(method = "checkEntityPostEffect", at = @At("RETURN"))
     private void setCreeperlingShader(Entity entity, CallbackInfo ci) {
-        if (this.shader != null && entity instanceof CreeperlingEntity) {
-            this.loadShader(new Identifier("shaders/post/creeper.json"));
+        if (this.postEffect != null && entity instanceof CreeperlingEntity) {
+            this.loadEffect(new ResourceLocation("shaders/post/creeper.json"));
         }
     }
 }

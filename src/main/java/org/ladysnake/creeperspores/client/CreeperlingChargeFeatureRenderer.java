@@ -17,36 +17,36 @@
  */
 package org.ladysnake.creeperspores.client;
 
-import net.minecraft.client.render.entity.feature.EnergySwirlOverlayFeatureRenderer;
-import net.minecraft.client.render.entity.feature.FeatureRendererContext;
-import net.minecraft.client.render.entity.model.CreeperEntityModel;
-import net.minecraft.client.render.entity.model.EntityModel;
-import net.minecraft.client.render.entity.model.EntityModelLayers;
-import net.minecraft.client.render.entity.model.EntityModelLoader;
-import net.minecraft.util.Identifier;
+import net.minecraft.client.model.CreeperModel;
+import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.geom.EntityModelSet;
+import net.minecraft.client.model.geom.ModelLayers;
+import net.minecraft.client.renderer.entity.RenderLayerParent;
+import net.minecraft.client.renderer.entity.layers.EnergySwirlLayer;
+import net.minecraft.resources.ResourceLocation;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 
-public class CreeperlingChargeFeatureRenderer extends EnergySwirlOverlayFeatureRenderer<CreeperlingEntity, CreeperEntityModel<CreeperlingEntity>> {
-    private static final Identifier SKIN = new Identifier("textures/entity/creeper/creeper_armor.png");
-    private final CreeperEntityModel<CreeperlingEntity> creeperModel;
+public class CreeperlingChargeFeatureRenderer extends EnergySwirlLayer<CreeperlingEntity, CreeperModel<CreeperlingEntity>> {
+    private static final ResourceLocation SKIN = new ResourceLocation("textures/entity/creeper/creeper_armor.png");
+    private final CreeperModel<CreeperlingEntity> creeperModel;
 
-    public CreeperlingChargeFeatureRenderer(FeatureRendererContext<CreeperlingEntity, CreeperEntityModel<CreeperlingEntity>> ctx, EntityModelLoader loader) {
+    public CreeperlingChargeFeatureRenderer(RenderLayerParent<CreeperlingEntity, CreeperModel<CreeperlingEntity>> ctx, EntityModelSet loader) {
         super(ctx);
-        this.creeperModel = new CreeperEntityModel<>(loader.getModelPart(EntityModelLayers.CREEPER_ARMOR));
+        this.creeperModel = new CreeperModel<>(loader.bakeLayer(ModelLayers.CREEPER_ARMOR));
     }
 
     @Override
-    protected float getEnergySwirlOffsetX(float v) {
+    protected float xOffset(float v) {
         return v * 0.01F;
     }
 
     @Override
-    protected Identifier getEnergySwirlTexture() {
+    protected ResourceLocation getTextureLocation() {
         return SKIN;
     }
 
     @Override
-    protected EntityModel<CreeperlingEntity> getEnergySwirlModel() {
+    protected EntityModel<CreeperlingEntity> model() {
         return this.creeperModel;
     }
 
