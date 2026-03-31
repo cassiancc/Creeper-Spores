@@ -19,6 +19,7 @@ package org.ladysnake.creeperspores.mixin.client;
 
 import net.minecraft.client.renderer.texture.TextureAtlasSprite;
 import net.minecraft.client.resources.MobEffectTextureManager;
+import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
@@ -31,13 +32,14 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
 @Mixin(MobEffectTextureManager.class)
 public abstract class StatusEffectSpriteManagerMixin {
-    @Unique
-    private static final MobEffect BASE_CREEPER_SPORES = CreeperEntry.getVanilla().sporeEffect();
+    @Shadow
+    public abstract TextureAtlasSprite get(Holder<MobEffect> holder);
 
-    @Shadow public abstract TextureAtlasSprite get(MobEffect statusEffect_1);
+    @Unique
+    private static final Holder<MobEffect> BASE_CREEPER_SPORES = CreeperEntry.getVanilla().sporeEffect();
 
     @Inject(method = "get", at = @At("HEAD"), cancellable = true)
-    private void creeperspores$getCreeperSporesSprite(MobEffect effect, CallbackInfoReturnable<TextureAtlasSprite> cir) {
+    private void creeperspores$getCreeperSporesSprite(Holder<MobEffect> effect, CallbackInfoReturnable<TextureAtlasSprite> cir) {
         if (effect instanceof CreeperSporeEffect && effect != BASE_CREEPER_SPORES) {
             cir.setReturnValue(get(BASE_CREEPER_SPORES));
         }

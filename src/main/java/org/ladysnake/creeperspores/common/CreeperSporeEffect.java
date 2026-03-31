@@ -39,13 +39,14 @@ public class CreeperSporeEffect extends MobEffect {
     }
 
     @Override
-    public boolean isDurationEffectTick(int duration, int amplifier) {
+    public boolean shouldApplyEffectTickThisTick(int duration, int amplifier) {
         return duration == 1 && Math.random() < 0.6;
     }
 
     @Override
-    public void applyEffectTick(LivingEntity affected, int amplifier) {
+    public boolean applyEffectTick(LivingEntity affected, int amplifier) {
         this.creeperEntry.get().spawnCreeperling(affected);
+        return false;
     }
 
     @Override

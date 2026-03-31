@@ -17,6 +17,8 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
+import net.minecraft.core.Holder;
+import org.jetbrains.annotations.Nullable;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.spongepowered.asm.mixin.Mixin;
@@ -26,7 +28,6 @@ import org.spongepowered.asm.mixin.injection.Inject;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 import org.spongepowered.asm.mixin.injection.callback.CallbackInfoReturnable;
 
-import javax.annotation.Nullable;
 import net.minecraft.world.damagesource.DamageSource;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
@@ -41,7 +42,9 @@ public abstract class LivingEntityMixin extends Entity {
     @Shadow
     public abstract float getHealth();
 
-    @Shadow @Nullable public abstract MobEffectInstance getEffect(MobEffect effect);
+    @Shadow
+    @Nullable
+    public abstract MobEffectInstance getEffect(Holder<MobEffect> holder);
 
     public LivingEntityMixin(EntityType<?> type, Level world) {
         super(type, world);
@@ -50,7 +53,7 @@ public abstract class LivingEntityMixin extends Entity {
     @Inject(method = "hurt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isDeadOrDying()Z", ordinal = 1))
     private void spawnCreeperling(DamageSource cause, float amount, CallbackInfoReturnable<Boolean> cir) {
         for (CreeperEntry creeperEntry : CreeperEntry.all()) {
-            MobEffectInstance spores = this.getEffect(creeperEntry.sporeEffect());
+            var spores = this.getEffect(creeperEntry.sporeEffect());
             if (spores != null) {
                 float chance = 0.2f * (spores.getAmplifier() + 1);
                 if (this.getHealth() <= 0.0f) {

@@ -17,6 +17,8 @@
  */
 package org.ladysnake.creeperspores;
 
+import net.minecraft.core.Holder;
+import net.minecraft.world.effect.MobEffect;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 
@@ -31,10 +33,10 @@ import java.util.Objects;
 
 public record CreeperEntry(EntityType<? extends LivingEntity> creeperType,
                            EntityType<CreeperlingEntity> creeperlingType,
-                           CreeperSporeEffect sporeEffect) {
+                           Holder<MobEffect> sporeEffect) {
     private static final Map<EntityType<?>, CreeperEntry> CREEPER_ENTRIES = new HashMap<>();
 
-    static void register(EntityType<? extends LivingEntity> type, EntityType<CreeperlingEntity> creeperlingType, CreeperSporeEffect sporesEffect) {
+    static void register(EntityType<? extends LivingEntity> type, EntityType<CreeperlingEntity> creeperlingType, Holder<MobEffect> sporesEffect) {
         CREEPER_ENTRIES.put(type, new CreeperEntry(type, creeperlingType, sporesEffect));
     }
 

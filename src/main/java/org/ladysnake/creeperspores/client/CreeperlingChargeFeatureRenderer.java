@@ -27,7 +27,7 @@ import net.minecraft.resources.ResourceLocation;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 
 public class CreeperlingChargeFeatureRenderer extends EnergySwirlLayer<CreeperlingEntity, CreeperModel<CreeperlingEntity>> {
-    private static final ResourceLocation SKIN = new ResourceLocation("textures/entity/creeper/creeper_armor.png");
+    private static final ResourceLocation SKIN = ResourceLocation.withDefaultNamespace("textures/entity/creeper/creeper_armor.png");
     private final CreeperModel<CreeperlingEntity> creeperModel;
 
     public CreeperlingChargeFeatureRenderer(RenderLayerParent<CreeperlingEntity, CreeperModel<CreeperlingEntity>> ctx, EntityModelSet loader) {

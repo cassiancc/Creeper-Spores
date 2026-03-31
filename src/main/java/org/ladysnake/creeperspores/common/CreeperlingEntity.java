@@ -18,11 +18,12 @@
 package org.ladysnake.creeperspores.common;
 
 import io.netty.buffer.Unpooled;
+import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
+import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.protocol.game.ClientboundCustomPayloadPacket;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
 import net.minecraft.network.syncher.SynchedEntityData;
@@ -134,7 +135,7 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     protected InteractionResult mobInteract(Player player, InteractionHand hand) {
         ItemStack held = player.getItemInHand(hand);
         if (held.is(CreeperSpores.FERTILIZERS)) {
-            if (!this.level().isClientSide) {
+            if (!this.level().isClientSide()) {
                 this.applyFertilizer(held);
                 this.setTrusting(true);
             }
@@ -142,17 +143,17 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
         } else if (held.is(ItemTags.CREEPER_IGNITERS)) {
             SoundEvent soundEvent = held.is(Items.FIRE_CHARGE) ? SoundEvents.FIRECHARGE_USE : SoundEvents.FLINTANDSTEEL_USE;
             this.level().playSound(player, this.getX(), this.getY(), this.getZ(), soundEvent, this.getSoundSource(), 1.0F, this.random.nextFloat() * 0.4F + 0.8F);
-            if (!this.level().isClientSide) {
-                this.setSecondsOnFire(4);
+            if (!this.level().isClientSide()) {
+                this.igniteForSeconds(4);
                 this.hurt(this.level().damageSources().inFire(), 5);
                 if (!held.isDamageableItem()) {
                     held.shrink(1);
                 } else {
-                    held.hurtAndBreak(1, player, p -> p.broadcastBreakEvent(hand));
+                    held.hurtAndBreak(1, player, getSlotForHand(hand));
                 }
             }
 
-            return InteractionResult.sidedSuccess(this.level().isClientSide);
+            return InteractionResult.sidedSuccess(this.level().isClientSide());
         } else {
             if (interactSpawnEgg(player, this, held, this.kind)) {
                 return InteractionResult.SUCCESS;
@@ -163,11 +164,11 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
 
     public static boolean interactSpawnEgg(Player player, Entity interacted, ItemStack stack, CreeperEntry kind) {
         Item item = stack.getItem();
-        if (item instanceof SpawnEggItem && ((SpawnEggItem)item).getType(stack.getTag()) == EntityType.CREEPER) {
-            if (!interacted.level().isClientSide) {
+        if (item instanceof SpawnEggItem && ((SpawnEggItem)item).getType(stack) == EntityType.CREEPER) {
+            if (!interacted.level().isClientSide()) {
                 CreeperlingEntity creeperling = kind.spawnCreeperling(interacted);
                 if (creeperling != null) {
-                    if (stack.hasCustomHoverName()) {
+                    if (stack.has(DataComponents.CUSTOM_NAME)) {
                         creeperling.setCustomName(stack.getHoverName());
                     }
 
@@ -204,16 +205,15 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
             boneMeal.shrink(1);
             FriendlyByteBuf buf = new FriendlyByteBuf(Unpooled.buffer());
             buf.writeInt(this.getId());
-            ClientboundCustomPayloadPacket packet = new ClientboundCustomPayloadPacket(CreeperSpores.CREEPERLING_FERTILIZATION_PACKET, buf);
+            var packet = new CreeperlingFertilizationPayload(this.getId());
 
             for (ServerPlayer p : trackingPlayers) {
-                p.connection.send(packet);
+                ServerPlayNetworking.send(p, packet);
             }
         }
     }
 
-    public static void createParticles(BlockableEventLoop<?> ctx, Player player, FriendlyByteBuf buf) {
-        int entityId = buf.readInt();
+    public static void createParticles(BlockableEventLoop<?> ctx, Player player, int entityId) {
         ctx.execute(() -> {
             Entity e = player.level().getEntity(entityId);
             if (e instanceof CreeperlingEntity) {
@@ -244,15 +244,15 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType spawnReason, @Nullable SpawnGroupData data, @Nullable CompoundTag tag) {
-        SpawnGroupData ret = super.finalizeSpawn(world, difficulty, spawnReason, data, tag);
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType spawnReason, @Nullable SpawnGroupData data) {
+        SpawnGroupData ret = super.finalizeSpawn(world, difficulty, spawnReason, data);
         float localDifficulty = difficulty.getSpecialMultiplier();
         this.ticksInSunlight = (int) (MATURATION_TIME * this.random.nextFloat() * 0.9 * localDifficulty);
         return ret;
     }
 
     @Override
-    public int getExperienceReward() {
+    protected int getBaseExperienceReward() {
         return 2 + this.level().random.nextInt(3);
     }
 
@@ -291,9 +291,9 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     }
 
     @Override
-    protected void defineSynchedData() {
-        super.defineSynchedData();
-        this.entityData.define(CHARGED, false);
+    protected void defineSynchedData(SynchedEntityData.Builder entityData) {
+        super.defineSynchedData(entityData);
+        entityData.define(CHARGED, false);
     }
 
     @Override

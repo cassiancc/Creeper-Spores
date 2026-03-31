@@ -38,7 +38,7 @@ public abstract class GameRendererMixin {
     @Inject(method = "checkEntityPostEffect", at = @At("RETURN"))
     private void setCreeperlingShader(Entity entity, CallbackInfo ci) {
         if (this.postEffect != null && entity instanceof CreeperlingEntity) {
-            this.loadEffect(new ResourceLocation("shaders/post/creeper.json"));
+            this.loadEffect(ResourceLocation.withDefaultNamespace("shaders/post/creeper.json"));
         }
     }
 }

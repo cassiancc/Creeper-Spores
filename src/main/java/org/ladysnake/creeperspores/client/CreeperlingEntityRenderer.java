@@ -30,7 +30,7 @@ import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.entity.Entity;
 
 public class CreeperlingEntityRenderer extends MobRenderer<CreeperlingEntity, CreeperModel<CreeperlingEntity>> {
-    public static final ResourceLocation DEFAULT_SKIN = new ResourceLocation("textures/entity/creeper/creeper.png");
+    public static final ResourceLocation DEFAULT_SKIN = ResourceLocation.withDefaultNamespace("textures/entity/creeper/creeper.png");
 
     private final ResourceLocation texture;
 

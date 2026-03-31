@@ -24,13 +24,16 @@ import net.fabricmc.fabric.api.gamerule.v1.GameRuleFactory;
 import net.fabricmc.fabric.api.gamerule.v1.GameRuleRegistry;
 import net.fabricmc.fabric.api.gamerule.v1.rule.DoubleRule;
 import net.fabricmc.fabric.api.gamerule.v1.rule.EnumRule;
+import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
 import net.fabricmc.fabric.api.object.builder.v1.entity.FabricEntityTypeBuilder;
+import net.minecraft.core.Holder;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.core.registries.Registries;
 import net.minecraft.resources.ResourceLocation;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.damagesource.DamageType;
+import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectCategory;
 import net.minecraft.world.entity.EntityDimensions;
 import net.minecraft.world.entity.EntityType;
@@ -49,6 +52,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
+import org.ladysnake.creeperspores.common.CreeperlingFertilizationPayload;
 import org.ladysnake.creeperspores.mixin.EntityTypeAccessor;
 
 import java.util.Arrays;
@@ -65,9 +69,9 @@ public class CreeperSpores implements ModInitializer {
     /** Identifiers corresponding to entity types that should be {@linkplain #registerCreeperLike(ResourceLocation, EntityType)
         registered as creeper likes} if and when the entity type gets registered to {@link BuiltInRegistries#ENTITY_TYPE}.*/
     public static final Set<ResourceLocation> CREEPER_LIKES = new HashSet<>(Arrays.asList(
-            new ResourceLocation("minecraft", "creeper"),
-            new ResourceLocation("mobz", "creep_entity"),
-            new ResourceLocation("mobz", "crip_entity")
+            ResourceLocation.fromNamespaceAndPath("minecraft", "creeper"),
+            ResourceLocation.fromNamespaceAndPath("mobz", "creep_entity"),
+            ResourceLocation.fromNamespaceAndPath("mobz", "crip_entity")
     ));
 
     public static final TagKey<Block> CREEPERLING_CAMOUFLAGE = TagKey.create(Registries.BLOCK, id("creeperling_camouflage"));
@@ -90,7 +94,7 @@ public class CreeperSpores implements ModInitializer {
     );
 
     public static ResourceLocation id(String path) {
-        return new ResourceLocation("creeperspores", path);
+        return ResourceLocation.fromNamespaceAndPath("creeperspores", path);
     }
 
     public static <T> void visitRegistry(Registry<T> registry, BiConsumer<ResourceLocation, T> visitor) {
@@ -100,6 +104,7 @@ public class CreeperSpores implements ModInitializer {
 
     @Override
     public void onInitialize() {
+        PayloadTypeRegistry.playS2C().register(CreeperlingFertilizationPayload.TYPE, CreeperlingFertilizationPayload.STREAM_CODEC);
         visitRegistry(BuiltInRegistries.ENTITY_TYPE, (id, type) -> {
             if (CREEPER_LIKES.contains(id)) {
                 // can't actually check that the entity type is living, so just hope nothing goes wrong
@@ -133,7 +138,7 @@ public class CreeperSpores implements ModInitializer {
                 CreeperSpores.id(prefix + "creeperling"),
                 createCreeperlingType(type)
         );
-        CreeperSporeEffect sporesEffect = Registry.register(
+		Holder<MobEffect> sporesEffect = Registry.registerForHolder(
                 BuiltInRegistries.MOB_EFFECT,
                 CreeperSpores.id(prefix + "creeper_spore"),
                 createCreeperSporesEffect(type)

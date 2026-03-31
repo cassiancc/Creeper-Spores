@@ -20,6 +20,7 @@ package org.ladysnake.creeperspores.mixin;
 import net.fabricmc.fabric.api.util.TriState;
 import net.minecraft.nbt.CompoundTag;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.effect.MobEffectInstance;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.EntityType;
@@ -72,11 +73,11 @@ public abstract class CreeperEntityMixin extends Monster implements SporeSpreade
             at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/monster/Monster;mobInteract(Lnet/minecraft/world/entity/player/Player;Lnet/minecraft/world/InteractionHand;)Lnet/minecraft/world/InteractionResult;"),
             cancellable = true
     )
-    private void interactSpawnEgg(Player player, InteractionHand hand, CallbackInfoReturnable<Boolean> cir) {
+    private void interactSpawnEgg(Player player, InteractionHand hand, CallbackInfoReturnable<InteractionResult> cir) {
         ItemStack stack = player.getItemInHand(hand);
         CreeperEntry creeperEntry = CreeperEntry.get(this.getType());
         if (creeperEntry != null && CreeperlingEntity.interactSpawnEgg(player, this, stack, creeperEntry)) {
-            cir.setReturnValue(true);
+            cir.setReturnValue(InteractionResult.SUCCESS);
         }
     }
 

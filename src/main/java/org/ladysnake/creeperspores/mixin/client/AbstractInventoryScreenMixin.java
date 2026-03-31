@@ -53,7 +53,7 @@ public abstract class AbstractInventoryScreenMixin {
     @ModifyVariable(method = "getEffectName", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/network/chat/Component;copy()Lnet/minecraft/network/chat/MutableComponent;"), index = 2)
     private MutableComponent creeperspores$updateRenderedEffectName(MutableComponent drawnString) {
         if (renderedEffects != null) {
-            MobEffect renderedEffect = renderedEffects.get(renderedEffectsIndex++).getEffect();
+            var renderedEffect = renderedEffects.get(renderedEffectsIndex++).getEffect();
             if (renderedEffect instanceof CreeperSporeEffect sporeEffect) {
                 return sporeEffect.getLocalizedName().plainCopy();
             }
