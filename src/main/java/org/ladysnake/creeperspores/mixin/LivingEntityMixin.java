@@ -18,6 +18,7 @@
 package org.ladysnake.creeperspores.mixin;
 
 import net.minecraft.core.Holder;
+import net.minecraft.server.level.ServerLevel;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
@@ -50,8 +51,8 @@ public abstract class LivingEntityMixin extends Entity {
         super(type, world);
     }
 
-    @Inject(method = "hurt", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isDeadOrDying()Z", ordinal = 1))
-    private void spawnCreeperling(DamageSource cause, float amount, CallbackInfoReturnable<Boolean> cir) {
+    @Inject(method = "hurtServer", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/LivingEntity;isDeadOrDying()Z", ordinal = 1))
+    private void spawnCreeperling(ServerLevel level, DamageSource cause, float damage, CallbackInfoReturnable<Boolean> cir) {
         for (CreeperEntry creeperEntry : CreeperEntry.all()) {
             var spores = this.getEffect(creeperEntry.sporeEffect());
             if (spores != null) {
@@ -69,8 +70,8 @@ public abstract class LivingEntityMixin extends Entity {
         }
     }
 
-    @ModifyVariable(method = "hurt", at = @At("HEAD"), ordinal = 0, argsOnly = true)
-    private float dealDoubleFireDamage(float damageAmount, DamageSource damage) {
+    @ModifyVariable(method = "hurtServer", at = @At("HEAD"), ordinal = 1, argsOnly = true)
+    private float dealDoubleFireDamage(float damageAmount, ServerLevel serverLevel, DamageSource damage) {
         //noinspection ConstantConditions
         if ((Entity) this instanceof Creeper && damage.is(CreeperSpores.EXTRA_CREEPER_DAMAGE)) {
             return damageAmount * 2;

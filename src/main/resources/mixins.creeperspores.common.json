@@ -9,8 +9,6 @@
     "EntityAccessor",
     "EntityTypeAccessor",
     "ExplosionMixin",
-    "GameRuleKeyAccessor",
-    "GameRulesMixin",
     "LivingEntityMixin",
     "SpawnHelperMixin",
     "WorldMixin"
@@ -19,8 +17,7 @@
     "client.AbstractInventoryScreenMixin",
     "client.EntityRendererAccessor",
     "client.EntityRendererRegistryMixin",
-    "client.GameRendererMixin",
-    "client.StatusEffectSpriteManagerMixin"
+    "client.GameRendererMixin"
   ],
   "injectors": {
     "defaultRequire": 1

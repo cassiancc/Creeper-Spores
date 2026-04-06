@@ -22,7 +22,6 @@ import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.nbt.CompoundTag;
 import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.syncher.EntityDataAccessor;
 import net.minecraft.network.syncher.EntityDataSerializers;
@@ -41,14 +40,7 @@ import net.minecraft.world.DifficultyInstance;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.damagesource.DamageSource;
-import net.minecraft.world.entity.Entity;
-import net.minecraft.world.entity.EntityType;
-import net.minecraft.world.entity.LightningBolt;
-import net.minecraft.world.entity.LivingEntity;
-import net.minecraft.world.entity.MobSpawnType;
-import net.minecraft.world.entity.PathfinderMob;
-import net.minecraft.world.entity.PowerableMob;
-import net.minecraft.world.entity.SpawnGroupData;
+import net.minecraft.world.entity.*;
 import net.minecraft.world.entity.ai.attributes.AttributeInstance;
 import net.minecraft.world.entity.ai.attributes.Attributes;
 import net.minecraft.world.entity.ai.goal.AvoidEntityGoal;
@@ -56,19 +48,20 @@ import net.minecraft.world.entity.ai.goal.FloatGoal;
 import net.minecraft.world.entity.ai.goal.LookAtPlayerGoal;
 import net.minecraft.world.entity.ai.goal.TemptGoal;
 import net.minecraft.world.entity.ai.goal.WaterAvoidingRandomStrollGoal;
-import net.minecraft.world.entity.animal.Cat;
-import net.minecraft.world.entity.animal.Ocelot;
+import net.minecraft.world.entity.animal.feline.Cat;
+import net.minecraft.world.entity.animal.feline.Ocelot;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.SpawnEggItem;
-import net.minecraft.world.item.crafting.Ingredient;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.LevelAccessor;
 import net.minecraft.world.level.LevelReader;
 import net.minecraft.world.level.LightLayer;
 import net.minecraft.world.level.ServerLevelAccessor;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.AABB;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
@@ -76,10 +69,9 @@ import org.ladysnake.creeperspores.mixin.EntityAccessor;
 
 import javax.annotation.Nullable;
 import java.util.ArrayList;
-import java.util.Objects;
 import java.util.UUID;
 
-public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
+public class CreeperlingEntity extends PathfinderMob {
     private static final EntityDataAccessor<Boolean> CHARGED = SynchedEntityData.defineId(CreeperlingEntity.class, EntityDataSerializers.BOOLEAN);
     public static final int MATURATION_TIME = 20 * 60 * 8;
 
@@ -99,19 +91,14 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
         this.goalSelector.addGoal(1, new FloatGoal(this));
         this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Ocelot.class, 6.0F, 1.0D, 1.2D));
         this.goalSelector.addGoal(2, new AvoidEntityGoal<>(this, Cat.class, 6.0F, 1.0D, 1.2D));
-        this.goalSelector.addGoal(3, new TemptGoal(this, 0.3D, Ingredient.of(CreeperSpores.FERTILIZERS), false));
+        this.goalSelector.addGoal(3, new TemptGoal(this, 0.3D, stack -> stack.is(CreeperSpores.FERTILIZERS), false));
         this.goalSelector.addGoal(5, new WaterAvoidingRandomStrollGoal(this, 1.0));
         this.goalSelector.addGoal(6, new LookAtPlayerGoal(this, Player.class, 8.0F));
         this.setTrusting(false);
     }
 
     @Override
-    public boolean isPowered() {
-        return this.isCharged();
-    }
-
-    @Override
-    public boolean checkSpawnRules(LevelAccessor world, MobSpawnType spawnType) {
+    public boolean checkSpawnRules(LevelAccessor world, EntitySpawnReason spawnType) {
         return super.checkSpawnRules(world, spawnType) && this.level().getBrightness(LightLayer.SKY, this.blockPosition()) > 0;
     }
 
@@ -149,11 +136,11 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
                 if (!held.isDamageableItem()) {
                     held.shrink(1);
                 } else {
-                    held.hurtAndBreak(1, player, getSlotForHand(hand));
+                    held.hurtAndBreak(1, player, hand);
                 }
             }
 
-            return InteractionResult.sidedSuccess(this.level().isClientSide());
+            return InteractionResult.SUCCESS_SERVER;
         } else {
             if (interactSpawnEgg(player, this, held, this.kind)) {
                 return InteractionResult.SUCCESS;
@@ -218,7 +205,7 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
             Entity e = player.level().getEntity(entityId);
             if (e instanceof CreeperlingEntity) {
                 for(int i = 0; i < 15; ++i) {
-                    RandomSource random = e.level().random;
+                    RandomSource random = e.level().getRandom();
                     double speedX = random.nextGaussian() * 0.02D;
                     double speedY = random.nextGaussian() * 0.02D;
                     double speedZ = random.nextGaussian() * 0.02D;
@@ -229,9 +216,9 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     }
 
     @Override
-    public boolean hurt(DamageSource cause, float amount) {
-        if (super.hurt(cause, amount)) {
-            if (!this.level().isClientSide) {
+    public boolean hurtServer(ServerLevel serverLevel, DamageSource cause, float amount) {
+        if (super.hurtServer(serverLevel, cause, amount)) {
+            if (!this.level().isClientSide()) {
                 Entity attacker = cause.getEntity();
                 if (attacker instanceof Ocelot || attacker instanceof Cat) {
                     ((ServerLevel)this.level()).sendParticles(ParticleTypes.HEART, attacker.getX(), attacker.getY() + attacker.getEyeHeight(), attacker.getZ(), 0, 0, 0.2f, 0, 0.1D);
@@ -244,7 +231,7 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
 
     @Nullable
     @Override
-    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, MobSpawnType spawnReason, @Nullable SpawnGroupData data) {
+    public SpawnGroupData finalizeSpawn(ServerLevelAccessor world, DifficultyInstance difficulty, EntitySpawnReason spawnReason, @Nullable SpawnGroupData data) {
         SpawnGroupData ret = super.finalizeSpawn(world, difficulty, spawnReason, data);
         float localDifficulty = difficulty.getSpecialMultiplier();
         this.ticksInSunlight = (int) (MATURATION_TIME * this.random.nextFloat() * 0.9 * localDifficulty);
@@ -252,8 +239,8 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     }
 
     @Override
-    protected int getBaseExperienceReward() {
-        return 2 + this.level().random.nextInt(3);
+    protected int getBaseExperienceReward(ServerLevel level) {
+        return 2 + level.getRandom().nextInt(3);
     }
 
     @Override
@@ -266,7 +253,7 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
         float brightnessAtPos = worldView.getPathfindingCostFromLightLevels(pos);
         float favor = Math.max(brightnessAtPos, skyFavor);
         // They like good soils too
-        if (worldView.getBlockState(pos.below(1)).is(BlockTags.BAMBOO_PLANTABLE_ON)) {
+        if (worldView.getBlockState(pos.below(1)).is(BlockTags.SUPPORTS_BAMBOO)) {
             favor += 3.0F;
         }
         // What they really want is camouflage
@@ -297,7 +284,7 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     }
 
     @Override
-    public void addAdditionalSaveData(CompoundTag tag) {
+    public void addAdditionalSaveData(ValueOutput tag) {
         super.addAdditionalSaveData(tag);
         if (this.isCharged()) {
             tag.putBoolean("powered", true);
@@ -307,16 +294,16 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     }
 
     @Override
-    public void readAdditionalSaveData(CompoundTag tag) {
+    public void readAdditionalSaveData(ValueInput tag) {
         super.readAdditionalSaveData(tag);
         if (tag.contains("powered")) {
-            this.entityData.set(CHARGED, tag.getBoolean("powered"));
+            this.entityData.set(CHARGED, tag.getBooleanOr("powered", false));
         }
         if (tag.contains("ticksInSunlight")) {
-            this.ticksInSunlight = tag.getInt("ticksInSunlight");
+            this.ticksInSunlight = tag.getIntOr("ticksInSunlight", 0);
         }
         if (tag.contains("trusting")) {
-            this.setTrusting(tag.getBoolean("trusting"));
+            this.setTrusting(tag.getBooleanOr("trusting", false));
         }
     }
 
@@ -329,15 +316,19 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
     @Override
     public void aiStep() {
         super.aiStep();
-        if (!this.level().isClientSide && this.level().getDifficulty() != Difficulty.PEACEFUL) {
-            if (this.random.nextFloat() < this.getGrowthChance()) {
+        if (!this.level().isClientSide() && this.level().getDifficulty() != Difficulty.PEACEFUL) {
+            if (this.random.nextFloat() < this.getGrowthChance((ServerLevel) level())) {
                 ++this.ticksInSunlight;
             }
             if (this.ticksInSunlight >= MATURATION_TIME) {
-                LivingEntity adult = kind.creeperType().create(this.level());
-                if (adult == null) {    // fallback to vanilla creeper
-                    adult = Objects.requireNonNull(CreeperEntry.getVanilla().creeperType().create(this.level()));
-                }
+
+				LivingEntity adult = this.convertTo(EntityType.CREEPER, ConversionParams.single(this, false, false), w -> {
+
+                });
+
+//                if (adult == null) {    // fallback to vanilla creeper
+//                    adult = Objects.requireNonNull(CreeperEntry.getVanilla().creeperType().create(this.level(), EntitySpawnReason.CONVERSION));
+//                }
 
                 AttributeInstance adultMaxHealthAttr = adult.getAttribute(Attributes.MAX_HEALTH);
                 AttributeInstance babyMaxHealthAttr = this.getAttribute(Attributes.MAX_HEALTH);
@@ -347,7 +338,6 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
                 UUID adultUuid = adult.getUUID();
                 double defaultMaxHealth = adultMaxHealthAttr.getBaseValue();
                 double healthMultiplier = adultMaxHealthAttr.getValue() / babyMaxHealthAttr.getValue();
-                adult.load(this.saveWithoutId(new CompoundTag()));
                 adult.setUUID(adultUuid);
                 adultMaxHealthAttr.setBaseValue(defaultMaxHealth);
                 adult.setHealth(adult.getHealth() * (float)healthMultiplier);
@@ -359,9 +349,9 @@ public class CreeperlingEntity extends PathfinderMob implements PowerableMob {
         }
     }
 
-    private float getGrowthChance() {
+    private float getGrowthChance(ServerLevel level) {
         float skyExposition = this.level().getBrightness(LightLayer.SKY, this.blockPosition()) / 15f;
-        return this.level().isDay() ? skyExposition : skyExposition * 0.5f * this.level().getMoonBrightness();
+        return this.level().isBrightOutside() ? skyExposition : skyExposition * 0.5f * level.getServer().overworld().getMoonBrightness(this.blockPosition());
     }
 
     private static void pushOutOfBlocks(Entity self) {

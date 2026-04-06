@@ -20,7 +20,7 @@ package org.ladysnake.creeperspores.api;
 import com.google.common.base.Preconditions;
 import net.minecraft.core.Registry;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.EntityType;
 import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Explosion;
@@ -41,13 +41,13 @@ public final class CreeperSporesApi {
      * @throws NullPointerException if {@code typeId} is null
      * @see #registerCreeperLike(EntityType)
      */
-    public static void registerCreeperLike(ResourceLocation typeId) {
+    public static void registerCreeperLike(Identifier typeId) {
         Preconditions.checkNotNull(typeId);
         CreeperSpores.registerCreeperLike(typeId);
     }
 
     /**
-     * Register a previously {@linkplain Registry#register(Registry, ResourceLocation, Object) registered} {@link EntityType}
+     * Register a previously {@linkplain Registry#register(Registry, Identifier, Object) registered} {@link EntityType}
      * as a creeper equivalent, able to spread spores and spawn creeperlings.
      *
      * <p> When an explosion's {@link Explosion#getIndirectSourceEntity() cause} is of a registered creeper-like type,

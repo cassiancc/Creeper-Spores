@@ -17,22 +17,26 @@
  */
 package org.ladysnake.creeperspores.client;
 
-import net.minecraft.client.model.CreeperModel;
-import net.minecraft.client.model.EntityModel;
+import net.minecraft.client.model.monster.creeper.CreeperModel;
 import net.minecraft.client.model.geom.EntityModelSet;
 import net.minecraft.client.model.geom.ModelLayers;
 import net.minecraft.client.renderer.entity.RenderLayerParent;
 import net.minecraft.client.renderer.entity.layers.EnergySwirlLayer;
-import net.minecraft.resources.ResourceLocation;
-import org.ladysnake.creeperspores.common.CreeperlingEntity;
+import net.minecraft.client.renderer.entity.state.CreeperRenderState;
+import net.minecraft.resources.Identifier;
 
-public class CreeperlingChargeFeatureRenderer extends EnergySwirlLayer<CreeperlingEntity, CreeperModel<CreeperlingEntity>> {
-    private static final ResourceLocation SKIN = ResourceLocation.withDefaultNamespace("textures/entity/creeper/creeper_armor.png");
-    private final CreeperModel<CreeperlingEntity> creeperModel;
+public class CreeperlingChargeFeatureRenderer extends EnergySwirlLayer<CreeperRenderState, CreeperModel> {
+    private static final Identifier SKIN = Identifier.withDefaultNamespace("textures/entity/creeper/creeper_armor.png");
+    private final CreeperModel creeperModel;
 
-    public CreeperlingChargeFeatureRenderer(RenderLayerParent<CreeperlingEntity, CreeperModel<CreeperlingEntity>> ctx, EntityModelSet loader) {
+    public CreeperlingChargeFeatureRenderer(RenderLayerParent<CreeperRenderState, CreeperModel> ctx, EntityModelSet loader) {
         super(ctx);
-        this.creeperModel = new CreeperModel<>(loader.bakeLayer(ModelLayers.CREEPER_ARMOR));
+        this.creeperModel = new CreeperModel(loader.bakeLayer(ModelLayers.CREEPER_ARMOR));
+    }
+
+    @Override
+    protected boolean isPowered(CreeperRenderState state) {
+        return state.isPowered;
     }
 
     @Override
@@ -41,12 +45,12 @@ public class CreeperlingChargeFeatureRenderer extends EnergySwirlLayer<Creeperli
     }
 
     @Override
-    protected ResourceLocation getTextureLocation() {
+    protected Identifier getTextureLocation() {
         return SKIN;
     }
 
     @Override
-    protected EntityModel<CreeperlingEntity> model() {
+    protected CreeperModel model() {
         return this.creeperModel;
     }
 

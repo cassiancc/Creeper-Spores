@@ -31,6 +31,9 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.level.Level;
+import net.minecraft.world.level.ServerExplosion;
+import net.minecraft.world.level.storage.ValueInput;
+import net.minecraft.world.level.storage.ValueOutput;
 import net.minecraft.world.phys.Vec3;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
@@ -60,7 +63,7 @@ public abstract class CreeperEntityMixin extends Monster implements SporeSpreade
     @Override
     public void spreadSpores(Explosion explosion, Vec3 center, Entity affectedEntity) {
         if (affectedEntity instanceof LivingEntity victim && this.shouldSpreadSpores()) {
-            double exposure = Explosion.getSeenPercent(center, victim);
+            double exposure = ServerExplosion.getSeenPercent(center, victim);
             CreeperEntry creeperEntry = CreeperEntry.get(this.getType());
             if (creeperEntry != null) {
                 victim.addEffect(new MobEffectInstance(creeperEntry.sporeEffect(), (int) Math.round(CreeperSpores.MAX_SPORE_TIME * exposure)));
@@ -82,16 +85,16 @@ public abstract class CreeperEntityMixin extends Monster implements SporeSpreade
     }
 
     @Inject(method = "addAdditionalSaveData", at = @At("RETURN"))
-    private void writeCustomDataToTag(CompoundTag tag, CallbackInfo ci) {
+    private void writeCustomDataToTag(ValueOutput output, CallbackInfo ci) {
         if (this.giveSpores != TriState.DEFAULT) {
-            tag.putBoolean(CreeperSpores.GIVE_SPORES_TAG, this.giveSpores.get());
+            output.putBoolean(CreeperSpores.GIVE_SPORES_TAG, this.giveSpores.get());
         }
     }
 
     @Inject(method = "readAdditionalSaveData", at = @At("RETURN"))
-    private void readCustomDataFromTag(CompoundTag tag, CallbackInfo ci) {
-        if (tag.contains(CreeperSpores.GIVE_SPORES_TAG)) {
-            this.giveSpores = TriState.of(tag.getBoolean(CreeperSpores.GIVE_SPORES_TAG));
+    private void readCustomDataFromTag(ValueInput input, CallbackInfo ci) {
+        if (input.contains(CreeperSpores.GIVE_SPORES_TAG)) {
+            this.giveSpores = TriState.of(input.getBooleanOr(CreeperSpores.GIVE_SPORES_TAG, false));
         }
     }
 }

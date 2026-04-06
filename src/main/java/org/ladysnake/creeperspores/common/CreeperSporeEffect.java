@@ -18,6 +18,7 @@
 package org.ladysnake.creeperspores.common;
 
 import com.google.common.base.Suppliers;
+import net.minecraft.server.level.ServerLevel;
 import org.ladysnake.creeperspores.CreeperEntry;
 
 import java.util.Objects;
@@ -44,7 +45,7 @@ public class CreeperSporeEffect extends MobEffect {
     }
 
     @Override
-    public boolean applyEffectTick(LivingEntity affected, int amplifier) {
+    public boolean applyEffectTick(ServerLevel serverLevel, LivingEntity affected, int amplification) {
         this.creeperEntry.get().spawnCreeperling(affected);
         return false;
     }

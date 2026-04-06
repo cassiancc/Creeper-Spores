@@ -17,6 +17,8 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
+import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.server.level.ServerLevel;
 import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.CreeperSpores;
 import org.spongepowered.asm.mixin.Mixin;
@@ -32,11 +34,11 @@ import net.minecraft.world.level.NaturalSpawner;
 
 @Mixin(NaturalSpawner.class)
 public abstract class SpawnHelperMixin {
-    @ModifyVariable(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;moveTo(DDDFF)V", shift = AFTER))
-    private static Mob substituteCreeper(Mob spawnedEntity) {
+    @ModifyVariable(method = "spawnCategoryForPosition(Lnet/minecraft/world/entity/MobCategory;Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/level/chunk/ChunkAccess;Lnet/minecraft/core/BlockPos;Lnet/minecraft/world/level/NaturalSpawner$SpawnPredicate;Lnet/minecraft/world/level/NaturalSpawner$AfterSpawnCallback;)V", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Mob;snapTo(DDDFF)V", shift = AFTER))
+    private static Mob substituteCreeper(Mob spawnedEntity, @Local(name = "level") ServerLevel serverLevel) {
         if (spawnedEntity instanceof Creeper
-                && spawnedEntity.level().getBrightness(LightLayer.SKY, spawnedEntity.blockPosition()) > 0
-                && spawnedEntity.level().getGameRules().getRule(CreeperSpores.CREEPER_REPLACE_CHANCE).get() > spawnedEntity.getRandom().nextDouble()) {
+                && serverLevel.getBrightness(LightLayer.SKY, spawnedEntity.blockPosition()) > 0
+                && serverLevel.getGameRules().get(CreeperSpores.CREEPER_REPLACE_CHANCE) > spawnedEntity.getRandom().nextDouble()) {
             CreeperEntry creeperEntry = CreeperEntry.get(spawnedEntity.getType());
             if (creeperEntry != null) {
                 return creeperEntry.createCreeperling(spawnedEntity);

@@ -19,7 +19,7 @@ package org.ladysnake.creeperspores.mixin.client;
 
 import net.minecraft.client.renderer.GameRenderer;
 import net.minecraft.client.renderer.PostChain;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.entity.Entity;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
@@ -33,12 +33,12 @@ import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 public abstract class GameRendererMixin {
     @Shadow @Nullable PostChain postEffect;
 
-    @Shadow abstract void loadEffect(ResourceLocation id);
+    @Shadow abstract void loadEffect(Identifier id);
 
     @Inject(method = "checkEntityPostEffect", at = @At("RETURN"))
     private void setCreeperlingShader(Entity entity, CallbackInfo ci) {
         if (this.postEffect != null && entity instanceof CreeperlingEntity) {
-            this.loadEffect(ResourceLocation.withDefaultNamespace("shaders/post/creeper.json"));
+            this.loadEffect(Identifier.withDefaultNamespace("shaders/post/creeper.json"));
         }
     }
 }

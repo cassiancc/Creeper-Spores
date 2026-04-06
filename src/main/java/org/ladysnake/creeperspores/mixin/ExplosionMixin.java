@@ -17,6 +17,7 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
+import net.minecraft.world.level.ServerExplosion;
 import org.ladysnake.creeperspores.common.SporeSpreader;
 import org.spongepowered.asm.mixin.Final;
 import org.spongepowered.asm.mixin.Mixin;
@@ -30,23 +31,16 @@ import net.minecraft.world.entity.LivingEntity;
 import net.minecraft.world.level.Explosion;
 import net.minecraft.world.phys.Vec3;
 
-@Mixin(Explosion.class)
-public abstract class ExplosionMixin {
-
-    @Shadow @Final private double x;
-
-    @Shadow @Final private double y;
-
-    @Shadow @Final private double z;
+@Mixin(ServerExplosion.class)
+public abstract class ExplosionMixin implements Explosion {
 
     @Shadow @Nullable public abstract LivingEntity getIndirectSourceEntity();
 
-
     // Using ModifyVariable is way easier than an Inject capturing every local
-    @ModifyVariable(method = "explode", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurt(Lnet/minecraft/world/damagesource/DamageSource;F)Z", shift = At.Shift.AFTER), ordinal = 0)
+    @ModifyVariable(method = "hurtEntities", at = @At(value = "INVOKE", target = "Lnet/minecraft/world/entity/Entity;hurtServer(Lnet/minecraft/server/level/ServerLevel;Lnet/minecraft/world/damagesource/DamageSource;F)Z", shift = At.Shift.AFTER), ordinal = 0)
     private Entity spreadSpores(Entity affectedEntity) {
         if (this.getIndirectSourceEntity() instanceof SporeSpreader) {
-            ((SporeSpreader) this.getIndirectSourceEntity()).spreadSpores((Explosion) (Object) this, new Vec3(this.x, this.y, this.z), affectedEntity);
+            ((SporeSpreader) this.getIndirectSourceEntity()).spreadSpores((Explosion) (Object) this, center(), affectedEntity);
         }
         return affectedEntity;
     }

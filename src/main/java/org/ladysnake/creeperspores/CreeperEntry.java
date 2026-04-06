@@ -19,6 +19,7 @@ package org.ladysnake.creeperspores;
 
 import net.minecraft.core.Holder;
 import net.minecraft.world.effect.MobEffect;
+import net.minecraft.world.entity.EntitySpawnReason;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
 import org.ladysnake.creeperspores.common.CreeperlingEntity;
 
@@ -57,9 +58,9 @@ public record CreeperEntry(EntityType<? extends LivingEntity> creeperType,
      * Spawns a creeperling at an affected entity
      */
     public CreeperlingEntity spawnCreeperling(Entity affected) {
-        if (!affected.level().isClientSide) {
-            CreeperlingEntity spawn = Objects.requireNonNull(this.creeperlingType.create(affected.level()));
-            spawn.moveTo(affected.getX(), affected.getY(), affected.getZ(), 0, 0);
+        if (!affected.level().isClientSide()) {
+            CreeperlingEntity spawn = Objects.requireNonNull(this.creeperlingType.create(affected.level(), EntitySpawnReason.EVENT));
+            spawn.snapTo(affected.getX(), affected.getY(), affected.getZ(), 0, 0);
             affected.level().addFreshEntity(spawn);
             return spawn;
         }
@@ -70,7 +71,7 @@ public record CreeperEntry(EntityType<? extends LivingEntity> creeperType,
      * Create a creeperling for an entity, without spawning it
      */
     public CreeperlingEntity createCreeperling(LivingEntity entity) {
-        CreeperlingEntity creeperlingEntity = Objects.requireNonNull(creeperlingType.create(entity.level()));
+        CreeperlingEntity creeperlingEntity = Objects.requireNonNull(creeperlingType.create(entity.level(), EntitySpawnReason.EVENT));
         creeperlingEntity.copyPosition(entity);
         return creeperlingEntity;
     }

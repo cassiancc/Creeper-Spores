@@ -1,6 +1,6 @@
 {
   "schemaVersion": 1,
-  "id": "modid",
+  "id": "creeperspores",
   "version": "${version}",
   "name": "Creeper Spores",
   "description": "Griefless creepers with a few tricks - a port of Creeper Spores to Fabric",
@@ -31,7 +31,7 @@
   ],
   "depends": {
     "fabricloader": ">=0.14.21",
-    "minecraft": "1.21.1",
+    "minecraft": "26.1",
     "java": ">=21",
     "fabric-api": "*"
   }

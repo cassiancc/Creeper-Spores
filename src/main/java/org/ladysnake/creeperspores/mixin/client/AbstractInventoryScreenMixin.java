@@ -17,47 +17,43 @@
  */
 package org.ladysnake.creeperspores.mixin.client;
 
-import net.minecraft.client.gui.GuiGraphics;
-import net.minecraft.client.gui.screens.inventory.EffectRenderingInventoryScreen;
+import com.llamalad7.mixinextras.injector.wrapoperation.Operation;
+import com.llamalad7.mixinextras.injector.wrapoperation.WrapOperation;
+import com.llamalad7.mixinextras.sugar.Local;
+import net.minecraft.client.gui.screens.inventory.EffectsInInventory;
+import net.minecraft.core.Holder;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.effect.MobEffect;
 import net.minecraft.world.effect.MobEffectInstance;
+import org.ladysnake.creeperspores.CreeperEntry;
 import org.ladysnake.creeperspores.common.CreeperSporeEffect;
 import org.spongepowered.asm.mixin.Mixin;
 import org.spongepowered.asm.mixin.Unique;
 import org.spongepowered.asm.mixin.injection.At;
-import org.spongepowered.asm.mixin.injection.Inject;
+import org.spongepowered.asm.mixin.injection.ModifyArg;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
-import org.spongepowered.asm.mixin.injection.callback.CallbackInfo;
 
-import java.util.List;
 
-@Mixin(EffectRenderingInventoryScreen.class)
+@Mixin(EffectsInInventory.class)
 public abstract class AbstractInventoryScreenMixin {
+
     @Unique
-    private List<MobEffectInstance> renderedEffects;
-    @Unique
-    private int renderedEffectsIndex;
+    private static final Holder<MobEffect> BASE_CREEPER_SPORES = CreeperEntry.getVanilla().sporeEffect();
 
-    @Inject(method = "renderLabels(Lnet/minecraft/client/gui/GuiGraphics;IILjava/lang/Iterable;)V", at = @At("HEAD"))
-    private void creeperspores$retrieveRenderedEffects(GuiGraphics graphics, int x, int height, Iterable<MobEffectInstance> effects, CallbackInfo ci) {
-        renderedEffects = (List<MobEffectInstance>) effects;
-        renderedEffectsIndex = 0;
-    }
-
-    @Inject(method = "renderLabels(Lnet/minecraft/client/gui/GuiGraphics;IILjava/lang/Iterable;)V", at = @At("RETURN"))
-    private void creeperspores$clearRenderedEffects(GuiGraphics graphics, int x, int height, Iterable<MobEffectInstance> effects, CallbackInfo ci) {
-        renderedEffects = null;
-    }
-
-    @ModifyVariable(method = "getEffectName", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/network/chat/Component;copy()Lnet/minecraft/network/chat/MutableComponent;"), index = 2)
-    private MutableComponent creeperspores$updateRenderedEffectName(MutableComponent drawnString) {
-        if (renderedEffects != null) {
-            var renderedEffect = renderedEffects.get(renderedEffectsIndex++).getEffect();
-            if (renderedEffect instanceof CreeperSporeEffect sporeEffect) {
-                return sporeEffect.getLocalizedName().plainCopy();
-            }
+    @ModifyVariable(method = "getEffectName", at = @At(value = "INVOKE_ASSIGN", target = "Lnet/minecraft/network/chat/Component;copy()Lnet/minecraft/network/chat/MutableComponent;"), name = "name")
+    private MutableComponent creeperspores$updateRenderedEffectName(MutableComponent drawnString, @Local MobEffectInstance renderedEffect) {
+        if (renderedEffect.getEffect() instanceof CreeperSporeEffect sporeEffect) {
+            return sporeEffect.getLocalizedName().plainCopy();
         }
         return drawnString;
+    }
+
+    @WrapOperation(method = "extractEffects", at = @At(value = "INVOKE", target = "Lnet/minecraft/client/gui/Gui;getMobEffectSprite(Lnet/minecraft/core/Holder;)Lnet/minecraft/resources/Identifier;"))
+    private Identifier creeperspores$updateRenderedEffectSprite(Holder<MobEffect> effect, Operation<Identifier> original) {
+        if (effect.value() instanceof CreeperSporeEffect sporeEffect && sporeEffect != BASE_CREEPER_SPORES.value()) {
+            return original.call(BASE_CREEPER_SPORES);
+        }
+        return original.call();
     }
 }

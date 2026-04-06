@@ -17,10 +17,11 @@
  */
 package org.ladysnake.creeperspores.mixin;
 
+import net.minecraft.server.level.ServerLevel;
 import net.minecraft.world.entity.Entity;
 import net.minecraft.world.entity.monster.Creeper;
 import net.minecraft.world.level.Explosion;
-import net.minecraft.world.level.GameRules;
+import net.minecraft.world.level.gamerules.GameRules;
 import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.Nullable;
 import org.ladysnake.creeperspores.CreeperGrief;
@@ -30,14 +31,14 @@ import org.spongepowered.asm.mixin.Shadow;
 import org.spongepowered.asm.mixin.injection.At;
 import org.spongepowered.asm.mixin.injection.ModifyVariable;
 
-@Mixin(Level.class)
+@Mixin(ServerLevel.class)
 public abstract class WorldMixin {
     @Shadow public abstract GameRules getGameRules();
 
-    @ModifyVariable(method = "explode(Lnet/minecraft/world/entity/Entity;Lnet/minecraft/world/damagesource/DamageSource;Lnet/minecraft/world/level/ExplosionDamageCalculator;DDDFZLnet/minecraft/world/level/Level$ExplosionInteraction;ZLnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/particles/ParticleOptions;Lnet/minecraft/core/Holder;)Lnet/minecraft/world/level/Explosion;", ordinal = 0, at = @At(value = "STORE", ordinal = 0))
+    @ModifyVariable(method = "explode", ordinal = 0, at = @At(value = "STORE", ordinal = 0))
     private Explosion.BlockInteraction griefLessExplosion(Explosion.BlockInteraction explosionType, @Nullable Entity entity) {
         if (entity instanceof Creeper creeper) {
-            CreeperGrief grief = this.getGameRules().getRule(CreeperSpores.CREEPER_GRIEF).get();
+            CreeperGrief grief = this.getGameRules().get(CreeperSpores.CREEPER_GRIEF);
             if (!grief.shouldGrief(creeper.isPowered())) {
                 return Explosion.BlockInteraction.KEEP;
             }
